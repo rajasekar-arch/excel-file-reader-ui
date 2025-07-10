@@ -1,13 +1,13 @@
-import Header from './components/header';
-import Footer from './components/footer';
+import Header from './components/Header';
+import FileReaderPage from './components/FileReaderPage';
+import Footer from './components/Footer';
 
 function App() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow p-6 bg-gray-100">
-        <h2 className="text-xl font-semibold">Welcome to My Excel File Reader App!</h2>
-        <p>This is a simple page with a header and footer layout.</p>
+        <FileReaderPage />
       </main>
       <Footer />
     </div>
