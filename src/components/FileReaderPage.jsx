@@ -77,7 +77,7 @@ const ExcelValidatorPage = () => {
     <div className="p-4 bg-white rounded shadow">
       <div>
         <p className="mb-2 text-gray-600">
-          <strong>excel-file-reader-browser-ts version:</strong> 1.0.10
+          <strong>excel-file-reader-browser-ts version:</strong> 1.0.11
         </p>
       </div>
       <h1 className="text-2xl font-bold mb-6">Excel File Validator</h1>
