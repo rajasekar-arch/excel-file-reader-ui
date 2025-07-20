@@ -23,6 +23,7 @@ const ExcelValidatorPage = () => {
   const [metadata, setMetadata] = useState(null);
   const [error, setError] = useState('');
   const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e) => {
     const uploadedFile = e.target.files?.[0];
@@ -37,10 +38,9 @@ const ExcelValidatorPage = () => {
 
   const handleValidateFile = async () => {
     if (!file) return;
-
+    setLoading(true);
     try {
       const buffer = await readFileAsArrayBuffer(file);
-
       const count = await getExcelRowCount(buffer);
       const allHeaders = await getExcelHeaders(buffer);
       const specialChars = await findSpecialCharacterCells(buffer);
@@ -54,8 +54,10 @@ const ExcelValidatorPage = () => {
       setColumnCount(columnCount);
       setMetadata(meta);
       setColumnHasValues(null); // Reset
+      setLoading(false);
     } catch (err) {
       console.error(err);
+      setLoading(false);
       setError('Error processing the Excel file.');
     }
   };
@@ -80,7 +82,7 @@ const ExcelValidatorPage = () => {
           <strong>excel-file-reader-browser-ts version:</strong> 1.0.11
         </p>
       </div>
-      <h1 className="text-2xl font-bold mb-6">Excel File Validator</h1>
+            <h1 className="text-2xl font-bold mb-6">Excel File Validator</h1>
       <input id="excel-file-input" type="file" accept=".xlsx" onChange={handleFileChange} className="mb-4" />
       <button
         onClick={handleValidateFile}
@@ -88,7 +90,7 @@ const ExcelValidatorPage = () => {
       >
         Validate Excel
       </button>
-       {/*  add reset button */}
+      {/*  add reset button */}
       <button
         onClick={() => {
           setRowCount(null);
@@ -101,81 +103,83 @@ const ExcelValidatorPage = () => {
           setMetadata(null);
           setError('');
           setFile(null);
-          // Clear file input value
-          if (document.getElementById('excel-file-input')) {
-            document.getElementById('excel-file-input').value = '';
-          }
+          setLoading(false);
         }}
         className="bg-gray-400 text-white px-4 py-2 rounded mb-4 ml-2"
       >
         Reset
       </button>
 
+      {loading ? (
+        <p className="text-gray-500 mb-4">loading....</p>
+      ) : (
+        <>
+          {error && <p className="text-red-500">{error}</p>}
 
-      {error && <p className="text-red-500">{error}</p>}
+          {metadata && (
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">File Metadata</h3>
+              {/* show as a json obeject */}
+              {/* show file size only in mb */}
+              <p>
+                file size: {metadata.fileSize} bytes ({(metadata.fileSize / (1024 * 1024)).toFixed(2)} MB)
+              </p>
+              <br />
+              <pre className="bg-gray-100 p-2 rounded mt-2">
+                {JSON.stringify(metadata, null, 2)}
+              </pre>
+            </div>
+          )}
 
-      {metadata && (
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold">File Metadata</h3>
-          {/* show as a json obeject */}
-          {/* show file size only in mb */}
-          <p>
-            file size: {metadata.fileSize} bytes ({(metadata.fileSize / (1024 * 1024)).toFixed(2)} MB)
-          </p>
-          <br />
-          <pre className="bg-gray-100 p-2 rounded mt-2">
-            {JSON.stringify(metadata, null, 2)}
-          </pre>
-        </div>
-      )}
+          {rowCount !== null && (
+            <div className="mb-4">
+              <p><strong>Total Rows:</strong> {rowCount}</p>
+              <p><strong>Total Columns:</strong> {columnCount}</p>
+              <p><strong>Special Characters Found:</strong> {specialCharsExist ? 'Yes' : 'No'}</p>
+              <p><strong>Headers:</strong> {headers.join(', ')}</p>
 
-      {rowCount !== null && (
-        <div className="mb-4">
-          <p><strong>Total Rows:</strong> {rowCount}</p>
-          <p><strong>Total Columns:</strong> {columnCount}</p>
-          <p><strong>Special Characters Found:</strong> {specialCharsExist ? 'Yes' : 'No'}</p>
-          <p><strong>Headers:</strong> {headers.join(', ')}</p>
+              {headers.length > 0 && (
+                <div className="mt-4">
+                  <label>Select a Header to Check Values:</label>
+                  <select
+                    value={selectedHeader}
+                    onChange={(e) => setSelectedHeader(e.target.value)}
+                    className="block mt-1 p-2 border rounded"
+                  >
+                    <option value="">-- Select --</option>
+                    {headers.map((header) => (
+                      <option key={header} value={header}>
+                        {header}
+                      </option>
+                    ))}
+                  </select>
 
-          {headers.length > 0 && (
-            <div className="mt-4">
-              <label>Select a Header to Check Values:</label>
-              <select
-                value={selectedHeader}
-                onChange={(e) => setSelectedHeader(e.target.value)}
-                className="block mt-1 p-2 border rounded"
-              >
-                <option value="">-- Select --</option>
-                {headers.map((header) => (
-                  <option key={header} value={header}>
-                    {header}
-                  </option>
-                ))}
-              </select>
+                  <button
+                    onClick={handleCheckColumnValues}
+                    className="mt-2 bg-green-600 text-white px-4 py-2 rounded"
+                  >
+                    Check Column
+                  </button>
 
-              <button
-                onClick={handleCheckColumnValues}
-                className="mt-2 bg-green-600 text-white px-4 py-2 rounded"
-              >
-                Check Column
-              </button>
-
-              {columnHasValues !== null && (
-                <p className="mt-2">
-                  <strong>Values in Column:</strong>{' '}
-                  {columnHasValues ? `Column "${selectedHeader}" has values:` : '❌ No'}
-                </p>
+                  {columnHasValues !== null && (
+                    <p className="mt-2">
+                      <strong>Values in Column:</strong>{' '}
+                      {columnHasValues ? `Column "${selectedHeader}" has values:` : '❌ No'}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}
-        </div>
-      )}
-      {tableData.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold">Excel Data Preview</h3>
-          <div className="p-4">
-            <ExcelPreviewTable data={tableData} />
-          </div>
-        </div>
+          {tableData.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-lg font-semibold">Excel Data Preview</h3>
+              <div className="p-4">
+                <ExcelPreviewTable data={tableData} />
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
