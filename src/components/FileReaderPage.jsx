@@ -7,7 +7,9 @@ import {
   findSpecialCharacterCells,
   getExcelRawData,
   getExcelColumnCount,
-  getExcelMetadata
+  getExcelMetadata,
+  downloadExcelAsCSV,
+  downloadExcelAsJSON
 } from 'excel-file-reader-browser-ts';
 
 import ExcelPreviewTable from './ExcelPreviewTable';
@@ -62,6 +64,36 @@ const ExcelValidatorPage = () => {
     }
   };
 
+  const handleCsvDownload = async () => {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const buffer = await readFileAsArrayBuffer(file);
+      await downloadExcelAsCSV(buffer);
+
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      setError('Error processing the Excel file.');
+    }
+  }
+
+  const handleJsonDownload = async () => {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const buffer = await readFileAsArrayBuffer(file);
+      await downloadExcelAsJSON(buffer);
+
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      setError('Error processing the Excel file.');
+    }
+  }
+
   const handleCheckColumnValues = async () => {
     if (!file || !selectedHeader) return;
 
@@ -79,10 +111,10 @@ const ExcelValidatorPage = () => {
     <div className="p-4 bg-white rounded shadow">
       <div>
         <p className="mb-2 text-gray-600">
-          <strong>excel-file-reader-browser-ts version:</strong> 1.0.14
+          <strong>excel-file-reader-browser-ts version:</strong> 1.0.15
         </p>
       </div>
-            <h1 className="text-2xl font-bold mb-6">Excel File Validator</h1>
+      <h1 className="text-2xl font-bold mb-6">Excel File Validator</h1>
       <input id="excel-file-input" type="file" accept=".xlsx" onChange={handleFileChange} className="mb-4" />
       <button
         onClick={handleValidateFile}
@@ -109,7 +141,14 @@ const ExcelValidatorPage = () => {
       >
         Reset
       </button>
+      {/* Add download csv button */}
 
+      <button onClick={handleCsvDownload} className="bg-green-400 text-white px-4 py-2 rounded mb-4 ml-2">
+        Download CSV
+      </button>
+      <button onClick={handleJsonDownload} className="bg-orange-400 text-white px-4 py-2 rounded mb-4 ml-2">
+        Download JSON
+      </button>
       {loading ? (
         <p className="text-gray-500 mb-4">loading....</p>
       ) : (
